@@ -32,16 +32,16 @@ int main(int argc, char **argv) {
         exit(1);
     }
 
-    FILE *addresses = openFile(ADDRESS_PATH, "r");
+    FILE *addressesFile = openFile(ADDRESS_PATH, "r");
 
     char *line = 0;
     size_t len = 0;
-    while (getline(&line, &len, addresses) != -1) {
+    while (getline(&line, &len, addressesFile) != -1) {
         LogicalAddress *la = newLogicalAddress((uint16_t)atoi(line));
         printLogicalAddress(stdout, la);
     }
 
-    fclose(addresses);
+    fclose(addressesFile);
     return 0;
 }
 
