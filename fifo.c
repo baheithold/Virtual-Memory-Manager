@@ -99,7 +99,7 @@ int main(int argc, char **argv) {
         // Check TLB for page
         int8_t TLBframe = TLBlookup(tlb, getLogicalAddressPageNumber(logicalAddress));
         uint8_t currFrame = 0;
-        if (TLBframe > 0) {
+        if (TLBframe != -1) {
             // TLB Hit
             currFrame = TLBframe;
             TLBhits++;
@@ -117,6 +117,8 @@ int main(int argc, char **argv) {
                 numPageFaults++;
             }
             currFrame = getPageFrameNumber(page);
+            setTLBPageAtIndex(tlb, TLBCounter, getLogicalAddressPageNumber(logicalAddress));
+            setTLBFrameAtIndex(tlb, TLBCounter, currFrame);
             TLBCounter = (TLBCounter + 1) % TLB_SIZE;
         }
         int physicalAddress = currFrame * FRAME_SIZE + getLogicalAddressOffset(logicalAddress);
@@ -126,8 +128,12 @@ int main(int argc, char **argv) {
         free(logicalAddress);
     }
 
+    // Display Statistics
     printf("Number of Translated Addresses = %d\n", numTranslated);
     printf("Page Faults %d\n", numPageFaults);
+    printf("Page Fault Rate = %.3f\n", (float)(numPageFaults) / numTranslated);
+    printf("TLB Hits = %d\n", TLBhits);
+    printf("TLB Hit Rate = %.3f\n", (float)(TLBhits) / numTranslated);
 
     // Free memory
     freePageTable(pageTable);
@@ -336,13 +342,13 @@ TLB *newTLB(void) {
 
 void setTLBPageAtIndex(TLB *tlb, int index, uint8_t page) {
     assert(tlb != 0);
-    assert(index > 0);
+    assert(index >= 0);
     setTLBNodePageNumber(tlb->nodes[index], page);
 }
 
 void setTLBFrameAtIndex(TLB *tlb, int index, uint8_t frame) {
     assert(tlb != 0);
-    assert(index > 0);
+    assert(index >= 0);
     setTLBNodeFrameNumber(tlb->nodes[index], frame);
 }
 
