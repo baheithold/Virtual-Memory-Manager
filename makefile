@@ -5,7 +5,7 @@ all:	fifo
 
 fifo:
 	@echo Making fifo...
-	@gcc -g fifo.c -o fifo -Wall
+	@gcc $(LOPTS) fifo.c -o fifo -Wall
 
 test:	all
 	@echo Testing fifo...
