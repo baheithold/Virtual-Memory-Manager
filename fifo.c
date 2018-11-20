@@ -32,7 +32,9 @@ void printLogicalAddress(FILE *, LogicalAddress *);
 /* Page Function Prototypes */
 Page *newPage(uint8_t);
 int isPageValid(Page *);
+void setPageValidation(Page *, int);
 uint8_t getPageFrameNumber(Page *);
+void setPageFrameNumber(Page *, uint8_t);
 
 /* PageTable Function Prototypes */
 PageTable *newPageTable(void);
@@ -42,6 +44,8 @@ void freePageTable(PageTable *);
 /* PhysicalMemory Function Prototypes */
 PhysicalMemory *newPhysicalMemory(void);
 void freePhysicalMemory(PhysicalMemory *);
+char *getPhysicalMemoryAtIndex(PhysicalMemory *, int);
+int getPhysicalMemoryValue(PhysicalMemory *,int, int);
 
 /* Function Prototypes */
 FILE *openFile(char *, char *);
@@ -54,15 +58,45 @@ int main(int argc, char **argv) {
         exit(1);
     }
 
+    // Open Files for reading
     FILE *addressesFile = openFile(ADDRESS_PATH, "r");
+    FILE *backStoreFile = openFile(BACKING_STORE_PATH, "rb");
 
+    // Create PageTable and PhysicalMemory
     PageTable *pageTable = newPageTable();
     PhysicalMemory *physicalMemory = newPhysicalMemory();
+
+    int frameCounter = 0;
+    int numPageFaults = 0;
+    int numTranslated = 0;
 
     char *line = 0;
     size_t len = 0;
     while (getline(&line, &len, addressesFile) != -1) {
+        uint32_t virtualAddress = atoi(line);
+        LogicalAddress *logicalAddress = newLogicalAddress((uint16_t)virtualAddress);
+        uint8_t currFrame = 0;
+        Page *page = getPageFromPageTable(pageTable, getLogicalAddressOffset(logicalAddress));
+        if (!isPageValid(page)) {
+            long offset = getLogicalAddressPageNumber(logicalAddress) * PAGE_SIZE;
+            fseek(backStoreFile, offset, SEEK_SET);
+            fread(getPhysicalMemoryAtIndex(physicalMemory, frameCounter), 1, FRAME_SIZE, backStoreFile);
+            setPageFrameNumber(page, frameCounter);
+            setPageValidation(page, 1);
+            currFrame = getPageFrameNumber(page);
+            frameCounter++;
+            numPageFaults++;
+        }
+        int physicalAddress = currFrame * FRAME_SIZE + getLogicalAddressOffset(logicalAddress);
+        int value = getPhysicalMemoryValue(physicalMemory, currFrame, getLogicalAddressOffset(logicalAddress));
+        printf("Virtual address: %d Physical address: %d Value: %d\n", virtualAddress, physicalAddress, value);
+        numTranslated++;
     }
+
+    printf("Number of Translated Addresses = %d\n", numTranslated);
+    printf("Page Faults %d\n", numPageFaults);
+
+    // Free memory
     freePageTable(pageTable);
     freePhysicalMemory(physicalMemory);
     free(line);
@@ -131,6 +165,11 @@ int isPageValid(Page *page) {
     return page->isValid;
 }
 
+void setPageValidation(Page *page, int valid) {
+    assert(page != 0);
+    page->isValid = valid;
+}
+
 uint8_t getPageFrameNumber(Page *page) {
     assert(page != 0);
     return page->frameNumber;
@@ -186,6 +225,18 @@ PhysicalMemory *newPhysicalMemory(void) {
         mem->memory[i] = malloc(sizeof(char) * FRAME_SIZE);
     }
     return mem;
+}
+
+char *getPhysicalMemoryAtIndex(PhysicalMemory *mem, int index) {
+    assert(mem != 0);
+    return mem->memory[index];
+}
+
+int getPhysicalMemoryValue(PhysicalMemory *mem, int i, int j) {
+    assert(mem != 0);
+    assert(i >= 0);
+    assert(j >= 0);
+    return mem->memory[i][j];
 }
 
 void freePhysicalMemory(PhysicalMemory *mem) {
