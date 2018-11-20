@@ -4,6 +4,7 @@
 # Executables
 *.out
 fifo
+lru
 
 # Valgrind Files
 vgcore.*

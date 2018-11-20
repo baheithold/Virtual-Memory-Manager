@@ -130,7 +130,7 @@ int main(int argc, char **argv) {
 
     // Display Statistics
     printf("Number of Translated Addresses = %d\n", numTranslated);
-    printf("Page Faults %d\n", numPageFaults);
+    printf("Page Faults = %d\n", numPageFaults);
     printf("Page Fault Rate = %.3f\n", (float)(numPageFaults) / numTranslated);
     printf("TLB Hits = %d\n", TLBhits);
     printf("TLB Hit Rate = %.3f\n", (float)(TLBhits) / numTranslated);
