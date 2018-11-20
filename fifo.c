@@ -53,9 +53,13 @@ int getPhysicalMemoryValue(PhysicalMemory *,int, int);
 /* TLBNode Function Prototypes */
 TLBNode *newTLBNode(uint8_t, uint8_t);
 uint8_t getTLBNodePageNumber(TLBNode *);
+void setTLBNodePageNumber(TLBNode *, uint8_t);
 uint8_t getTLBNodeFrameNumber(TLBNode *);
+void setTLBNodeFrameNumber(TLBNode *, uint8_t);
 
 /* TLB Function Prototypes */
+TLB *newTLB(void);
+void freeTLB(TLB *);
 
 /* Function Prototypes */
 FILE *openFile(char *, char *);
@@ -282,13 +286,46 @@ uint8_t getTLBNodePageNumber(TLBNode *n) {
     return n->pageNumber;
 }
 
+void setTLBNodePageNumber(TLBNode *n, uint8_t page) {
+    assert(n != 0);
+    assert(page >= 0);
+    n->pageNumber = page;
+}
+
 uint8_t getTLBNodeFrameNumber(TLBNode *n) {
     assert(n != 0);
     return n->frameNumber;
 }
 
+void setTLBNodeFrameNumber(TLBNode *n, uint8_t frame) {
+    assert(n != 0);
+    assert(frame >= 0);
+    n->frameNumber = frame;
+}
+
 
 /********** TLBNode Definitions **********/
+
+typedef struct TLB {
+    TLBNode **nodes;
+} TLB;
+
+TLB *newTLB(void) {
+    TLB *tlb = malloc(sizeof(TLB));
+    tlb->nodes = malloc(sizeof(TLBNode *) * TLB_SIZE);
+    for (int i = 0; i < TLB_SIZE; ++i) {
+        tlb->nodes[i] = newTLBNode(-1, -1);
+    }
+}
+
+void freeTLB(TLB *tlb) {
+    assert(tlb != 0);
+    for (int i = 0; i < TLB_SIZE; ++i) {
+        free(tlb->nodes[i]);
+    }
+    free(tlb->nodes);
+    free(tlb);
+}
 
 
 /*********** Function Definitions ***********/
