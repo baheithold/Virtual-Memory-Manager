@@ -21,7 +21,7 @@ rebuild: 	all
 
 valgrind:	all
 	clear
-	valgrind ./fifo
+	valgrind ./fifo ./addresses.txt
 
 clean:
 	@echo Cleaning...
