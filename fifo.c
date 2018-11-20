@@ -10,11 +10,19 @@
 /* Global Constants */
 #define ADDRESS_PATH argv[1]
 
+/* Struct Type Prototypes */
+typedef struct LogicalAddress LogicalAddress;
+
+/* LogicalAddress Function Prototypes */
+LogicalAddress *newLogicalAddress(uint16_t);
+uint8_t getLogicalAddressPageNumber(LogicalAddress *);
+uint8_t getLogicalAddressOffset(LogicalAddress *);
+
 /* Function Prototypes */
 FILE *openFile(char *, char *);
 
 
-/* MAIN */
+/*********** MAIN ***********/
 int main(int argc, char **argv) {
     if (argc != 2) {
         printf("Usage: %s <filepath>\n", argv[0]);
@@ -33,7 +41,35 @@ int main(int argc, char **argv) {
 }
 
 
-/* Function Definitions */
+/********** LogicalAddress Definitions **********/
+
+typedef struct LogicalAddress {
+    uint8_t pageNumber;
+    uint8_t offset;
+} LogicalAddress;
+
+LogicalAddress *newLogicalAddress(uint16_t n) {
+    assert(n > 0);
+    LogicalAddress *addr = malloc(sizeof(LogicalAddress));
+    uint16_t msb = n >> 8;
+    uint16_t lsb = n & 0xFF;
+    addr->pageNumber = (uint16_t)msb;
+    addr->offset = (uint16_t)lsb;
+    return addr;
+}
+
+uint8_t getLogicalAddressPageNumber(LogicalAddress *addr) {
+    assert(addr != 0);
+    return addr->pageNumber;
+}
+
+uint8_t getLogicalAddressOffset(LogicalAddress *addr) {
+    assert(addr != 0);
+    return addr->offset;
+}
+
+
+/*********** Function Definitions ***********/
 
 FILE *openFile(char *filename, char *mode) {
     assert(filename != 0);
