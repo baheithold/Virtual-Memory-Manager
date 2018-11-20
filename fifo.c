@@ -56,10 +56,15 @@ int main(int argc, char **argv) {
 
     FILE *addressesFile = openFile(ADDRESS_PATH, "r");
 
+    PageTable *pageTable = newPageTable();
+    PhysicalMemory *physicalMemory = newPhysicalMemory();
+
     char *line = 0;
     size_t len = 0;
     while (getline(&line, &len, addressesFile) != -1) {
     }
+    freePageTable(pageTable);
+    freePhysicalMemory(physicalMemory);
     free(line);
 
     fclose(addressesFile);
