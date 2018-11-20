@@ -138,6 +138,7 @@ int main(int argc, char **argv) {
     // Free memory
     freePageTable(pageTable);
     freePhysicalMemory(physicalMemory);
+    freeTLB(tlb);
     free(line);
 
     // Close files
