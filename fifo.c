@@ -19,6 +19,7 @@
 /* Struct Type Prototypes */
 typedef struct LogicalAddress LogicalAddress;
 typedef struct Page Page;
+typedef struct PhysicalMemory PhysicalMemory;
 
 /* LogicalAddress Function Prototypes */
 LogicalAddress *newLogicalAddress(uint16_t);
@@ -31,6 +32,10 @@ void printLogicalAddress(FILE *, LogicalAddress *);
 Page *newPage(uint8_t);
 int isPageValid(Page *);
 uint8_t getPageFrameNumber(Page *);
+
+/* PhysicalMemory Function Prototypes */
+PhysicalMemory *newPhysicalMemory(void);
+void freePhysicalMemory(PhysicalMemory *);
 
 /* Function Prototypes */
 FILE *openFile(char *, char *);
@@ -107,6 +112,7 @@ Page *newPage(uint8_t frameNumber) {
     Page *page = malloc(sizeof(Page));
     page->isValid = 0;
     page->frameNumber = frameNumber;
+    return page;
 }
 
 int isPageValid(Page *page) {
@@ -117,6 +123,31 @@ int isPageValid(Page *page) {
 uint8_t getPageFrameNumber(Page *page) {
     assert(page != 0);
     return page->frameNumber;
+}
+
+
+/********** PhysicalMemory Definitions **********/
+
+typedef struct PhysicalMemory {
+    char **memory;
+} PhysicalMemory;
+
+PhysicalMemory *newPhysicalMemory(void) {
+    PhysicalMemory *mem = malloc(sizeof(PhysicalMemory));
+    mem->memory = malloc(sizeof(char *) * NUM_FRAMES);
+    for (int i = 0; i < NUM_FRAMES; ++i) {
+        mem->memory[i] = malloc(sizeof(char) * FRAME_SIZE);
+    }
+    return mem;
+}
+
+void freePhysicalMemory(PhysicalMemory *mem) {
+    assert(mem != 0);
+    for (int i = 0; i < NUM_FRAMES; ++i) {
+        free(mem->memory[i]);
+    }
+    free(mem->memory);
+    free(mem);
 }
 
 
