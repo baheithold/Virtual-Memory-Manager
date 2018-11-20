@@ -19,6 +19,7 @@
 /* Struct Type Prototypes */
 typedef struct LogicalAddress LogicalAddress;
 typedef struct Page Page;
+typedef struct PageTable PageTable;
 typedef struct PhysicalMemory PhysicalMemory;
 
 /* LogicalAddress Function Prototypes */
@@ -32,6 +33,11 @@ void printLogicalAddress(FILE *, LogicalAddress *);
 Page *newPage(uint8_t);
 int isPageValid(Page *);
 uint8_t getPageFrameNumber(Page *);
+
+/* PageTable Function Prototypes */
+PageTable *newPageTable(void);
+Page *getPageFromPageTable(PageTable *, int);
+void freePageTable(PageTable *);
 
 /* PhysicalMemory Function Prototypes */
 PhysicalMemory *newPhysicalMemory(void);
@@ -123,6 +129,42 @@ int isPageValid(Page *page) {
 uint8_t getPageFrameNumber(Page *page) {
     assert(page != 0);
     return page->frameNumber;
+}
+
+void setPageFrameNumber(Page *page, uint8_t frameNumber) {
+    assert(page != 0);
+    page->frameNumber = frameNumber;
+}
+
+
+/********** PageTable Definitions **********/
+
+typedef struct PageTable {
+    Page **pages;
+} PageTable;
+
+PageTable *newPageTable(void) {
+    PageTable *table = malloc(sizeof(PageTable));
+    table->pages = malloc(sizeof(Page *) * NUM_PAGES);
+    for (int i = 0; i < NUM_PAGES; ++i) {
+        table->pages[i] = newPage(0);
+    }
+    return table;
+}
+
+Page *getPageFromPageTable(PageTable *table, int index) {
+    assert(table != 0);
+    assert(index >= 0);
+    return table->pages[index];
+}
+
+void freePageTable(PageTable *table) {
+    assert(table != 0);
+    for (int i = 0; i < NUM_PAGES; ++i) {
+        free(table->pages[i]);
+    }
+    free(table->pages);
+    free(table);
 }
 
 
