@@ -18,6 +18,7 @@
 
 /* Struct Type Prototypes */
 typedef struct LogicalAddress LogicalAddress;
+typedef struct Page Page;
 
 /* LogicalAddress Function Prototypes */
 LogicalAddress *newLogicalAddress(uint16_t);
@@ -25,6 +26,11 @@ uint16_t getLogicalAddress(LogicalAddress *);
 uint8_t getLogicalAddressPageNumber(LogicalAddress *);
 uint8_t getLogicalAddressOffset(LogicalAddress *);
 void printLogicalAddress(FILE *, LogicalAddress *);
+
+/* Page Function Prototypes */
+Page *newPage(uint8_t);
+int isValid(Page *);
+uint8_t getPageFrameNumber(Page *);
 
 /* Function Prototypes */
 FILE *openFile(char *, char *);
@@ -87,6 +93,30 @@ uint8_t getLogicalAddressOffset(LogicalAddress *addr) {
 void printLogicalAddress(FILE *fp, LogicalAddress *addr) {
     assert(addr != 0);
     fprintf(fp, "Address: %d Page Number: %d Offset: %d\n", addr->address, addr->pageNumber, addr->offset);
+}
+
+
+/********** Page Definitions **********/
+
+typedef struct Page {
+    int isValid;
+    uint8_t frameNumber;
+} Page;
+
+Page *newPage(uint8_t frameNumber) {
+    Page *page = malloc(sizeof(Page));
+    page->isValid = 0;
+    page->frameNumber = frameNumber;
+}
+
+int isValid(Page *page) {
+    assert(page != 0);
+    return page->isValid;
+}
+
+uint8_t getPageFrameNumber(Page *page) {
+    assert(page != 0);
+    return page->frameNumber;
 }
 
 
