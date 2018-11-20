@@ -8,6 +8,7 @@ fifo: 	fifo.c
 	@gcc $(LOPTS) fifo.c -o fifo -Wall
 
 test:	all
+	clear
 	@echo Testing fifo...
 	@./fifo ./addresses.txt
 

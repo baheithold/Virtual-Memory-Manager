@@ -15,8 +15,10 @@ typedef struct LogicalAddress LogicalAddress;
 
 /* LogicalAddress Function Prototypes */
 LogicalAddress *newLogicalAddress(uint16_t);
+uint16_t getLogicalAddress(LogicalAddress *);
 uint8_t getLogicalAddressPageNumber(LogicalAddress *);
 uint8_t getLogicalAddressOffset(LogicalAddress *);
+void printLogicalAddress(FILE *, LogicalAddress *);
 
 /* Function Prototypes */
 FILE *openFile(char *, char *);
@@ -34,6 +36,8 @@ int main(int argc, char **argv) {
     char *line = 0;
     size_t len = 0;
     while (getline(&line, &len, addresses) != -1) {
+        LogicalAddress *la = newLogicalAddress((uint16_t)atoi(line));
+        printLogicalAddress(stdout, la);
     }
 
     fclose(addresses);
@@ -44,6 +48,7 @@ int main(int argc, char **argv) {
 /********** LogicalAddress Definitions **********/
 
 typedef struct LogicalAddress {
+    uint16_t address;
     uint8_t pageNumber;
     uint8_t offset;
 } LogicalAddress;
@@ -51,11 +56,17 @@ typedef struct LogicalAddress {
 LogicalAddress *newLogicalAddress(uint16_t n) {
     assert(n > 0);
     LogicalAddress *addr = malloc(sizeof(LogicalAddress));
+    addr->address = n;
     uint16_t msb = n >> 8;
     uint16_t lsb = n & 0xFF;
-    addr->pageNumber = (uint16_t)msb;
-    addr->offset = (uint16_t)lsb;
+    addr->pageNumber = (uint8_t)msb;
+    addr->offset = (uint8_t)lsb;
     return addr;
+}
+
+uint16_t getLogicalAddress(LogicalAddress *addr) {
+    assert(addr != 0);
+    return addr->address;
 }
 
 uint8_t getLogicalAddressPageNumber(LogicalAddress *addr) {
@@ -66,6 +77,11 @@ uint8_t getLogicalAddressPageNumber(LogicalAddress *addr) {
 uint8_t getLogicalAddressOffset(LogicalAddress *addr) {
     assert(addr != 0);
     return addr->offset;
+}
+
+void printLogicalAddress(FILE *fp, LogicalAddress *addr) {
+    assert(addr != 0);
+    fprintf(fp, "Address: %d Page Number: %d Offset: %d\n", addr->address, addr->pageNumber, addr->offset);
 }
 
 
