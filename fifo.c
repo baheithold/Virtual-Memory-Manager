@@ -15,12 +15,15 @@
 #define NUM_PAGES           256
 #define FRAME_SIZE          256
 #define NUM_FRAMES          256
+#define TLB_SIZE            16
 
 /* Struct Type Prototypes */
 typedef struct LogicalAddress LogicalAddress;
 typedef struct Page Page;
 typedef struct PageTable PageTable;
 typedef struct PhysicalMemory PhysicalMemory;
+typedef struct TLBNode TLBNode;
+typedef struct TLB TLB;
 
 /* LogicalAddress Function Prototypes */
 LogicalAddress *newLogicalAddress(uint16_t);
@@ -46,6 +49,13 @@ PhysicalMemory *newPhysicalMemory(void);
 void freePhysicalMemory(PhysicalMemory *);
 char *getPhysicalMemoryAtIndex(PhysicalMemory *, int);
 int getPhysicalMemoryValue(PhysicalMemory *,int, int);
+
+/* TLBNode Function Prototypes */
+TLBNode *newTLBNode(uint8_t, uint8_t);
+uint8_t getTLBNodePageNumber(TLBNode *);
+uint8_t getTLBNodeFrameNumber(TLBNode *);
+
+/* TLB Function Prototypes */
 
 /* Function Prototypes */
 FILE *openFile(char *, char *);
@@ -92,6 +102,7 @@ int main(int argc, char **argv) {
         int value = getPhysicalMemoryValue(physicalMemory, currFrame, getLogicalAddressOffset(logicalAddress));
         printf("Virtual address: %d Physical address: %d Value: %d\n", virtualAddress, physicalAddress, value);
         numTranslated++;
+        free(logicalAddress);
     }
 
     printf("Number of Translated Addresses = %d\n", numTranslated);
@@ -102,7 +113,9 @@ int main(int argc, char **argv) {
     freePhysicalMemory(physicalMemory);
     free(line);
 
+    // Close files
     fclose(addressesFile);
+    fclose(backStoreFile);
     return 0;
 }
 
@@ -248,6 +261,34 @@ void freePhysicalMemory(PhysicalMemory *mem) {
     free(mem->memory);
     free(mem);
 }
+
+
+/********** TLBNode Definitions **********/
+
+typedef struct TLBNode {
+    uint8_t pageNumber;
+    uint8_t frameNumber;
+} TLBNode;
+
+TLBNode *newTLBNode(uint8_t page, uint8_t frame) {
+    TLBNode *n = malloc(sizeof(TLBNode));
+    n->pageNumber = page;
+    n->frameNumber = frame;
+    return n;
+}
+
+uint8_t getTLBNodePageNumber(TLBNode *n) {
+    assert(n != 0);
+    return n->pageNumber;
+}
+
+uint8_t getTLBNodeFrameNumber(TLBNode *n) {
+    assert(n != 0);
+    return n->frameNumber;
+}
+
+
+/********** TLBNode Definitions **********/
 
 
 /*********** Function Definitions ***********/
