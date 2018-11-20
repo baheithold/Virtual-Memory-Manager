@@ -3,13 +3,13 @@ LOPTS = -Wall -Wextra -std=c99 -g
 
 all:	fifo
 
-fifo:
+fifo: 	fifo.c
 	@echo Making fifo...
 	@gcc $(LOPTS) fifo.c -o fifo -Wall
 
 test:	all
 	@echo Testing fifo...
-	@./fifo
+	@./fifo ./addresses.txt
 
 rebuild: 	all
 	@make clean -s
