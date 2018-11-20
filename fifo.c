@@ -8,8 +8,13 @@
 
 
 /* Global Constants */
-#define ADDRESS_PATH argv[1]
-#define OFFSET_MASK 0xFF
+#define ADDRESS_PATH        argv[1]
+#define BACKING_STORE_PATH  "./BACKING_STORE.bin"
+#define OFFSET_MASK         0xFF
+#define PAGE_SIZE           256
+#define NUM_PAGES           256
+#define FRAME_SIZE          256
+#define NUM_FRAMES          256
 
 /* Struct Type Prototypes */
 typedef struct LogicalAddress LogicalAddress;
@@ -37,8 +42,7 @@ int main(int argc, char **argv) {
     char *line = 0;
     size_t len = 0;
     while (getline(&line, &len, addressesFile) != -1) {
-        LogicalAddress *la = newLogicalAddress((uint16_t)atoi(line));
-        printLogicalAddress(stdout, la);
+        LogicalAddress *logicalAddr = newLogicalAddress((uint16_t)atoi(line));
     }
 
     fclose(addressesFile);
