@@ -42,8 +42,8 @@ int main(int argc, char **argv) {
     char *line = 0;
     size_t len = 0;
     while (getline(&line, &len, addressesFile) != -1) {
-        LogicalAddress *logicalAddr = newLogicalAddress((uint16_t)atoi(line));
     }
+    free(line);
 
     fclose(addressesFile);
     return 0;
@@ -104,8 +104,6 @@ FILE *openFile(char *filename, char *mode) {
         // check for supported file mode
         if (strcmp(mode, "r") == 0)         modeString = "reading";
         else if (strcmp(mode, "rb") == 0)   modeString = "reading binary";
-        else if (strcmp(mode, "w") == 0)    modeString = "writing";
-        else if (strcmp(mode, "wb") == 0)   modeString = "writing binary";
         else                                modeString = "";
         fprintf(stderr, "Error: Cannot open %s", filename);
         // file mode not supported
