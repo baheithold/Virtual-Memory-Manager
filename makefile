@@ -12,6 +12,8 @@ test:	all
 	@./fifo ./addresses.txt
 
 rebuild: 	all
+	@clear
+	@echo Rebuilding Project...
 	@make clean -s
 	@make -s
 	@echo Finished Rebuilding...

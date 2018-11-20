@@ -1,7 +1,14 @@
+#define _GNU_SOURCE
+
+#include <assert.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
+
+/* Global Constants */
+#define ADDRESS_PATH argv[1]
 
 /* Function Prototypes */
 FILE *openFile(char *, char *);
@@ -14,8 +21,14 @@ int main(int argc, char **argv) {
         exit(1);
     }
 
-    FILE *fp = openFile(argv[1], "");
+    FILE *addresses = openFile(ADDRESS_PATH, "r");
 
+    char *line = 0;
+    size_t len = 0;
+    while (getline(&line, &len, addresses) != -1) {
+    }
+
+    fclose(addresses);
     return 0;
 }
 
@@ -23,6 +36,10 @@ int main(int argc, char **argv) {
 /* Function Definitions */
 
 FILE *openFile(char *filename, char *mode) {
+    assert(filename != 0);
+    assert(strcmp(filename, "") != 0);
+    assert(mode != 0);
+    assert(strcmp(mode, "") != 0);
     FILE *fp = fopen(filename, mode);
     // check if file was opened
     if (fp == 0) {
