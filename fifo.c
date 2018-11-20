@@ -9,6 +9,7 @@
 
 /* Global Constants */
 #define ADDRESS_PATH argv[1]
+#define OFFSET_MASK 0xFF
 
 /* Struct Type Prototypes */
 typedef struct LogicalAddress LogicalAddress;
@@ -27,7 +28,7 @@ FILE *openFile(char *, char *);
 /*********** MAIN ***********/
 int main(int argc, char **argv) {
     if (argc != 2) {
-        printf("Usage: %s <filepath>\n", argv[0]);
+        fprintf(stderr, "Usage: %s <filepath>\n", argv[0]);
         exit(1);
     }
 
@@ -58,7 +59,7 @@ LogicalAddress *newLogicalAddress(uint16_t n) {
     LogicalAddress *addr = malloc(sizeof(LogicalAddress));
     addr->address = n;
     uint16_t msb = n >> 8;
-    uint16_t lsb = n & 0xFF;
+    uint16_t lsb = n & OFFSET_MASK;
     addr->pageNumber = (uint8_t)msb;
     addr->offset = (uint8_t)lsb;
     return addr;
@@ -102,9 +103,9 @@ FILE *openFile(char *filename, char *mode) {
         else if (strcmp(mode, "w") == 0)    modeString = "writing";
         else if (strcmp(mode, "wb") == 0)   modeString = "writing binary";
         else                                modeString = "";
-        printf("Error: Cannot open %s", filename);
+        fprintf(stderr, "Error: Cannot open %s", filename);
         // file mode not supported
-        if (strcmp(mode, "") != 0) printf(" for %s!", modeString);
+        if (strcmp(mode, "") != 0) fprintf(stderr, " for %s!", modeString);
         printf("\n");
         exit(1);
     }
