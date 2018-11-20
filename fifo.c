@@ -29,7 +29,7 @@ void printLogicalAddress(FILE *, LogicalAddress *);
 
 /* Page Function Prototypes */
 Page *newPage(uint8_t);
-int isValid(Page *);
+int isPageValid(Page *);
 uint8_t getPageFrameNumber(Page *);
 
 /* Function Prototypes */
@@ -109,7 +109,7 @@ Page *newPage(uint8_t frameNumber) {
     page->frameNumber = frameNumber;
 }
 
-int isValid(Page *page) {
+int isPageValid(Page *page) {
     assert(page != 0);
     return page->isValid;
 }
