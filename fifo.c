@@ -76,7 +76,7 @@ int main(int argc, char **argv) {
         uint32_t virtualAddress = atoi(line);
         LogicalAddress *logicalAddress = newLogicalAddress((uint16_t)virtualAddress);
         uint8_t currFrame = 0;
-        Page *page = getPageFromPageTable(pageTable, getLogicalAddressOffset(logicalAddress));
+        Page *page = getPageFromPageTable(pageTable, getLogicalAddressPageNumber(logicalAddress));
         if (!isPageValid(page)) {
             long offset = getLogicalAddressPageNumber(logicalAddress) * PAGE_SIZE;
             fseek(backStoreFile, offset, SEEK_SET);
@@ -87,6 +87,7 @@ int main(int argc, char **argv) {
             frameCounter++;
             numPageFaults++;
         }
+        currFrame = getPageFrameNumber(page);
         int physicalAddress = currFrame * FRAME_SIZE + getLogicalAddressOffset(logicalAddress);
         int value = getPhysicalMemoryValue(physicalMemory, currFrame, getLogicalAddressOffset(logicalAddress));
         printf("Virtual address: %d Physical address: %d Value: %d\n", virtualAddress, physicalAddress, value);
