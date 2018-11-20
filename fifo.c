@@ -59,6 +59,9 @@ void setTLBNodeFrameNumber(TLBNode *, uint8_t);
 
 /* TLB Function Prototypes */
 TLB *newTLB(void);
+void setTLBPageAtIndex(TLB *, int, uint8_t);
+void setTLBFrameAtIndex(TLB *, int, uint8_t);
+int8_t TLBlookup(TLB *, uint8_t);
 void freeTLB(TLB *);
 
 /* Function Prototypes */
@@ -79,29 +82,43 @@ int main(int argc, char **argv) {
     // Create PageTable and PhysicalMemory
     PageTable *pageTable = newPageTable();
     PhysicalMemory *physicalMemory = newPhysicalMemory();
+    TLB *tlb = newTLB();
 
     int frameCounter = 0;
+    int TLBCounter = 0;
     int numPageFaults = 0;
     int numTranslated = 0;
+    int TLBhits = 0;
 
     char *line = 0;
     size_t len = 0;
     while (getline(&line, &len, addressesFile) != -1) {
+        // Convert virtual address to logical address
         uint32_t virtualAddress = atoi(line);
         LogicalAddress *logicalAddress = newLogicalAddress((uint16_t)virtualAddress);
+        // Check TLB for page
+        int8_t TLBframe = TLBlookup(tlb, getLogicalAddressPageNumber(logicalAddress));
         uint8_t currFrame = 0;
-        Page *page = getPageFromPageTable(pageTable, getLogicalAddressPageNumber(logicalAddress));
-        if (!isPageValid(page)) {
-            long offset = getLogicalAddressPageNumber(logicalAddress) * PAGE_SIZE;
-            fseek(backStoreFile, offset, SEEK_SET);
-            fread(getPhysicalMemoryAtIndex(physicalMemory, frameCounter), 1, FRAME_SIZE, backStoreFile);
-            setPageFrameNumber(page, frameCounter);
-            setPageValidation(page, 1);
-            currFrame = getPageFrameNumber(page);
-            frameCounter++;
-            numPageFaults++;
+        if (TLBframe > 0) {
+            // TLB Hit
+            currFrame = TLBframe;
+            TLBhits++;
         }
-        currFrame = getPageFrameNumber(page);
+        else {
+            Page *page = getPageFromPageTable(pageTable, getLogicalAddressPageNumber(logicalAddress));
+            if (!isPageValid(page)) {
+                long offset = getLogicalAddressPageNumber(logicalAddress) * PAGE_SIZE;
+                fseek(backStoreFile, offset, SEEK_SET);
+                fread(getPhysicalMemoryAtIndex(physicalMemory, frameCounter), 1, FRAME_SIZE, backStoreFile);
+                setPageFrameNumber(page, frameCounter);
+                setPageValidation(page, 1);
+                currFrame = getPageFrameNumber(page);
+                frameCounter++;
+                numPageFaults++;
+            }
+            currFrame = getPageFrameNumber(page);
+            TLBCounter = (TLBCounter + 1) % TLB_SIZE;
+        }
         int physicalAddress = currFrame * FRAME_SIZE + getLogicalAddressOffset(logicalAddress);
         int value = getPhysicalMemoryValue(physicalMemory, currFrame, getLogicalAddressOffset(logicalAddress));
         printf("Virtual address: %d Physical address: %d Value: %d\n", virtualAddress, physicalAddress, value);
@@ -288,7 +305,6 @@ uint8_t getTLBNodePageNumber(TLBNode *n) {
 
 void setTLBNodePageNumber(TLBNode *n, uint8_t page) {
     assert(n != 0);
-    assert(page >= 0);
     n->pageNumber = page;
 }
 
@@ -299,7 +315,6 @@ uint8_t getTLBNodeFrameNumber(TLBNode *n) {
 
 void setTLBNodeFrameNumber(TLBNode *n, uint8_t frame) {
     assert(n != 0);
-    assert(frame >= 0);
     n->frameNumber = frame;
 }
 
@@ -316,6 +331,29 @@ TLB *newTLB(void) {
     for (int i = 0; i < TLB_SIZE; ++i) {
         tlb->nodes[i] = newTLBNode(-1, -1);
     }
+    return tlb;
+}
+
+void setTLBPageAtIndex(TLB *tlb, int index, uint8_t page) {
+    assert(tlb != 0);
+    assert(index > 0);
+    setTLBNodePageNumber(tlb->nodes[index], page);
+}
+
+void setTLBFrameAtIndex(TLB *tlb, int index, uint8_t frame) {
+    assert(tlb != 0);
+    assert(index > 0);
+    setTLBNodeFrameNumber(tlb->nodes[index], frame);
+}
+
+int8_t TLBlookup(TLB *tlb, uint8_t page) {
+    assert(tlb != 0);
+    for (int i = 0; i < TLB_SIZE; ++i) {
+        if (getTLBNodePageNumber(tlb->nodes[i]) == page) {
+            return getTLBNodeFrameNumber(tlb->nodes[i]);
+        }
+    }
+    return -1;
 }
 
 void freeTLB(TLB *tlb) {
