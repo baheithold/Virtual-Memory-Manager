@@ -63,10 +63,12 @@ TLB *newTLB(void);
 void setTLBPageAtIndex(TLB *, int, uint8_t);
 void setTLBFrameAtIndex(TLB *, int, uint8_t);
 int8_t TLBlookup(TLB *, uint8_t);
+int updateTLB(TLB *, int, LogicalAddress *, int);
 void freeTLB(TLB *);
 
 /* Function Prototypes */
 FILE *openFile(char *, char *);
+int translateLogicalToPhysicalAddress(uint8_t, LogicalAddress *);
 void handlePageFault(Page *, LogicalAddress *, PhysicalMemory *, int, FILE *);
 
 
@@ -81,17 +83,19 @@ int main(int argc, char **argv) {
     FILE *addressesFile = openFile(ADDRESS_PATH, "r");
     FILE *backStoreFile = openFile(BACKING_STORE_PATH, "rb");
 
-    // Create PageTable and PhysicalMemory
+    // Create PageTable, PhysicalMemory, and TLB
     PageTable *pageTable = newPageTable();
     PhysicalMemory *physicalMemory = newPhysicalMemory();
     TLB *tlb = newTLB();
 
+    // Counters
     int frameCounter = 0;
     int TLBCounter = 0;
     int numPageFaults = 0;
     int numTranslated = 0;
     int TLBhits = 0;
 
+    // Perform Translations
     char *line = 0;
     size_t len = 0;
     while (getline(&line, &len, addressesFile) != -1) {
@@ -114,12 +118,11 @@ int main(int argc, char **argv) {
                 frameCounter++;
                 numPageFaults++;
             }
+            // Get frame and updated TLB
             currFrame = getPageFrameNumber(page);
-            setTLBPageAtIndex(tlb, TLBCounter, getLogicalAddressPageNumber(logicalAddress));
-            setTLBFrameAtIndex(tlb, TLBCounter, currFrame);
-            TLBCounter = (TLBCounter + 1) % TLB_SIZE;
+            TLBCounter = updateTLB(tlb, TLBCounter, logicalAddress, currFrame);
         }
-        int physicalAddress = currFrame * FRAME_SIZE + getLogicalAddressOffset(logicalAddress);
+        int physicalAddress = translateLogicalToPhysicalAddress(currFrame, logicalAddress);
         int value = getPhysicalMemoryValue(physicalMemory, currFrame, getLogicalAddressOffset(logicalAddress));
         printf("Virtual address: %d Physical address: %d Value: %d\n", virtualAddress, physicalAddress, value);
         numTranslated++;
@@ -362,6 +365,15 @@ int8_t TLBlookup(TLB *tlb, uint8_t page) {
     return -1;
 }
 
+int updateTLB(TLB *tlb, int counter, LogicalAddress *logicalAddress, int frame) {
+    assert(tlb != 0);
+    assert(counter >= 0);
+    assert(logicalAddress != 0);
+    setTLBPageAtIndex(tlb, counter, getLogicalAddressPageNumber(logicalAddress));
+    setTLBFrameAtIndex(tlb, counter, frame);
+    return ++counter % TLB_SIZE;
+}
+
 void freeTLB(TLB *tlb) {
     assert(tlb != 0);
     for (int i = 0; i < TLB_SIZE; ++i) {
@@ -394,6 +406,11 @@ FILE *openFile(char *filename, char *mode) {
         exit(1);
     }
     return fp;
+}
+
+int translateLogicalToPhysicalAddress(uint8_t frame, LogicalAddress *logicalAddress) {
+    assert(logicalAddress != 0);
+    return frame * FRAME_SIZE + getLogicalAddressOffset(logicalAddress);
 }
 
 void handlePageFault(Page *page, LogicalAddress *la, PhysicalMemory *mem, int frame, FILE *backingStore) {
