@@ -15,7 +15,7 @@
 #define PAGE_SIZE           256
 #define NUM_PAGES           256
 #define FRAME_SIZE          256
-#define NUM_FRAMES          128
+#define NUM_FRAMES          256
 #define TLB_SIZE            16
 
 /* Struct Type Prototypes */
@@ -70,6 +70,7 @@ void freeTLB(TLB *);
 FILE *openFile(char *, char *);
 int translateLogicalToPhysicalAddress(uint8_t, LogicalAddress *);
 void handlePageFault(Page *, LogicalAddress *, PhysicalMemory *, int, FILE *);
+void printStatistics(FILE *, int, int, int);
 
 
 /*********** MAIN ***********/
@@ -93,7 +94,7 @@ int main(int argc, char **argv) {
     int TLBCounter = 0;
     int numPageFaults = 0;
     int numTranslated = 0;
-    int TLBhits = 0;
+    int numTLBhits = 0;
 
     // Perform Translations
     char *line = 0;
@@ -108,7 +109,7 @@ int main(int argc, char **argv) {
         if (TLBframe != -1) {
             // TLB Hit
             currFrame = TLBframe;
-            TLBhits++;
+            numTLBhits++;
         }
         else {
             Page *page = getPageFromPageTable(pageTable, getLogicalAddressPageNumber(logicalAddress));
@@ -140,11 +141,7 @@ int main(int argc, char **argv) {
     fclose(backStoreFile);
 
     // Display Statistics
-    printf("Number of Translated Addresses = %d\n", numTranslated);
-    printf("Page Faults = %d\n", numPageFaults);
-    printf("Page Fault Rate = %.3f\n", (float)(numPageFaults) / numTranslated);
-    printf("TLB Hits = %d\n", TLBhits);
-    printf("TLB Hit Rate = %.3f\n", (float)(TLBhits) / numTranslated);
+    printStatistics(stdout, numTranslated, numPageFaults, numTLBhits);
 
     return 0;
 }
@@ -424,4 +421,12 @@ void handlePageFault(Page *page, LogicalAddress *la, PhysicalMemory *mem, int fr
     fread(getPhysicalMemoryAtIndex(mem, frame), 1, FRAME_SIZE, backingStore);
     setPageFrameNumber(page, frame);
     setPageValidation(page, 1);
+}
+
+void printStatistics(FILE *fp, int numTranslated, int numPageFaults, int numTLBhits) {
+    fprintf(fp, "Number of Translated Addresses = %d\n", numTranslated);
+    fprintf(fp, "Page Faults = %d\n", numPageFaults);
+    fprintf(fp, "Page Fault Rate = %.3f\n", (float)(numPageFaults) / numTranslated);
+    fprintf(fp, "TLB Hits = %d\n", numTLBhits);
+    fprintf(fp, "TLB Hit Rate = %.3f\n", (float)(numTLBhits) / numTranslated);
 }
