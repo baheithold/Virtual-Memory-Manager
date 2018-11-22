@@ -13,10 +13,10 @@ lru: 	lru.c
 test: 	all
 	@echo Testing fifo...
 	@./fifo ./addresses.txt > fifo.out
-	@diff fifo.out correct.txt
+	@diff fifo.out correct-fifo.txt
 	@echo Testing lru...
 	@./lru ./addresses.txt > lru.out
-	@diff lru.out correct.txt
+	@diff lru.out correct-lru.txt
 	@echo Finished Testing...
 
 
