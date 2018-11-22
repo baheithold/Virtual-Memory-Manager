@@ -66,6 +66,7 @@ void freeTLB(TLB *);
 
 /* Function Prototypes */
 FILE *openFile(char *, char *);
+void handlePageFault(Page *, LogicalAddress *, PhysicalMemory *, int, FILE *);
 
 
 /*********** MAIN ***********/
@@ -107,12 +108,8 @@ int main(int argc, char **argv) {
         else {
             Page *page = getPageFromPageTable(pageTable, getLogicalAddressPageNumber(logicalAddress));
             if (!isPageValid(page)) {
-                long offset = getLogicalAddressPageNumber(logicalAddress) * PAGE_SIZE;
-                fseek(backStoreFile, offset, SEEK_SET);
-                fread(getPhysicalMemoryAtIndex(physicalMemory, frameCounter), 1, FRAME_SIZE, backStoreFile);
-                setPageFrameNumber(page, frameCounter);
-                setPageValidation(page, 1);
-                currFrame = getPageFrameNumber(page);
+                // Page Fault
+                handlePageFault(page, logicalAddress, physicalMemory, frameCounter, backStoreFile);
                 frameCounter++;
                 numPageFaults++;
             }
@@ -274,11 +271,11 @@ char *getPhysicalMemoryAtIndex(PhysicalMemory *mem, int index) {
     return mem->memory[index];
 }
 
-int getPhysicalMemoryValue(PhysicalMemory *mem, int i, int j) {
+int getPhysicalMemoryValue(PhysicalMemory *mem, int frameNumber, int offset) {
     assert(mem != 0);
-    assert(i >= 0);
-    assert(j >= 0);
-    return mem->memory[i][j];
+    assert(frameNumber >= 0);
+    assert(offset >= 0);
+    return mem->memory[frameNumber][offset];
 }
 
 void freePhysicalMemory(PhysicalMemory *mem) {
@@ -395,4 +392,17 @@ FILE *openFile(char *filename, char *mode) {
         exit(1);
     }
     return fp;
+}
+
+void handlePageFault(Page *page, LogicalAddress *la, PhysicalMemory *mem, int frame, FILE *backingStore) {
+    assert(page != 0);
+    assert(la != 0);
+    assert(mem != 0);
+    assert(frame >= 0);
+    assert(backingStore != 0);
+    long offset = getLogicalAddressPageNumber(la) * PAGE_SIZE;
+    fseek(backingStore, offset, SEEK_SET);
+    fread(getPhysicalMemoryAtIndex(mem, frame), 1, FRAME_SIZE, backingStore);
+    setPageFrameNumber(page, frame);
+    setPageValidation(page, 1);
 }
