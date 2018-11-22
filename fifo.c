@@ -126,13 +126,6 @@ int main(int argc, char **argv) {
         free(logicalAddress);
     }
 
-    // Display Statistics
-    printf("Number of Translated Addresses = %d\n", numTranslated);
-    printf("Page Faults = %d\n", numPageFaults);
-    printf("Page Fault Rate = %.3f\n", (float)(numPageFaults) / numTranslated);
-    printf("TLB Hits = %d\n", TLBhits);
-    printf("TLB Hit Rate = %.3f\n", (float)(TLBhits) / numTranslated);
-
     // Free memory
     freePageTable(pageTable);
     freePhysicalMemory(physicalMemory);
@@ -142,6 +135,14 @@ int main(int argc, char **argv) {
     // Close files
     fclose(addressesFile);
     fclose(backStoreFile);
+
+    // Display Statistics
+    printf("Number of Translated Addresses = %d\n", numTranslated);
+    printf("Page Faults = %d\n", numPageFaults);
+    printf("Page Fault Rate = %.3f\n", (float)(numPageFaults) / numTranslated);
+    printf("TLB Hits = %d\n", TLBhits);
+    printf("TLB Hit Rate = %.3f\n", (float)(TLBhits) / numTranslated);
+
     return 0;
 }
 
