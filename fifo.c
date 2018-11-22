@@ -10,6 +10,7 @@
 /* Global Constants */
 #define ADDRESS_PATH        argv[1]
 #define BACKING_STORE_PATH  "./BACKING_STORE.bin"
+#define PAGE_MASK           0xFFFF
 #define OFFSET_MASK         0xFF
 #define PAGE_SIZE           256
 #define NUM_PAGES           256
@@ -157,10 +158,10 @@ LogicalAddress *newLogicalAddress(uint16_t n) {
     assert(n > 0);
     LogicalAddress *addr = malloc(sizeof(LogicalAddress));
     addr->address = n;
-    uint16_t msb = n >> 8;
-    uint16_t lsb = n & OFFSET_MASK;
-    addr->pageNumber = (uint8_t)msb;
-    addr->offset = (uint8_t)lsb;
+    uint8_t msb = (n & PAGE_MASK) >> 8;
+    uint8_t lsb = n & OFFSET_MASK;
+    addr->pageNumber = msb;
+    addr->offset = lsb;
     return addr;
 }
 
