@@ -118,7 +118,7 @@ int main(int argc, char **argv) {
                 frameCounter++;
                 numPageFaults++;
             }
-            // Get frame and updated TLB
+            // Get frame and update TLB
             currFrame = getPageFrameNumber(page);
             TLBCounter = updateTLB(tlb, TLBCounter, logicalAddress, currFrame);
         }
