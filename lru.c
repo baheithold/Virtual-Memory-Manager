@@ -15,7 +15,7 @@
 #define PAGE_SIZE           256
 #define NUM_PAGES           256
 #define FRAME_SIZE          256
-#define NUM_FRAMES          128
+#define NUM_FRAMES          256
 #define TLB_SIZE            16
 
 /* Struct Type Prototypes */
@@ -99,12 +99,12 @@ int main(int argc, char **argv) {
     char *line = 0;
     size_t len = 0;
     while (getline(&line, &len, addressesFile) != -1) {
-        uint8_t currFrame = 0;
         // Get Logical Address from Addresses File
         uint32_t virtualAddress = atoi(line);
         LogicalAddress *logicalAddress = newLogicalAddress((uint16_t)virtualAddress);
         // Check TLB for page
         int8_t TLBframe = TLBlookup(tlb, getLogicalAddressPageNumber(logicalAddress));
+        uint8_t currFrame = 0;
         if (TLBframe != -1) {
             // TLB Hit
             currFrame = TLBframe;
@@ -195,7 +195,6 @@ void printLogicalAddress(FILE *fp, LogicalAddress *addr) {
 typedef struct Page {
     int isValid;
     uint8_t frameNumber;
-    int lastUsed;
 } Page;
 
 Page *newPage(uint8_t frameNumber) {

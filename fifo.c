@@ -99,12 +99,12 @@ int main(int argc, char **argv) {
     char *line = 0;
     size_t len = 0;
     while (getline(&line, &len, addressesFile) != -1) {
-        uint8_t currFrame = 0;
         // Get Logical Address from Addresses File
         uint32_t virtualAddress = atoi(line);
         LogicalAddress *logicalAddress = newLogicalAddress((uint16_t)virtualAddress);
         // Check TLB for page
         int8_t TLBframe = TLBlookup(tlb, getLogicalAddressPageNumber(logicalAddress));
+        uint8_t currFrame = 0;
         if (TLBframe != -1) {
             // TLB Hit
             currFrame = TLBframe;
