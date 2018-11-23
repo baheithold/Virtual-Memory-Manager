@@ -71,7 +71,10 @@ void freeTLB(TLB *);
 /* Function Prototypes */
 FILE *openFile(char *, char *);
 int translateLogicalToPhysicalAddress(uint8_t, LogicalAddress *);
-void handlePageFault(Page *, LogicalAddress *, PhysicalMemory *, int, FILE *);
+void handlePageFault(PageTable *, TLB *, LogicalAddress *, PhysicalMemory *, int, FILE *);
+int shouldReplace(int);
+int getLRUindex(PageTable *);
+int getFirstValidIndex(PageTable *);
 void printStatistics(FILE *, int, int, int);
 
 
@@ -92,11 +95,12 @@ int main(int argc, char **argv) {
     TLB *tlb = newTLB();
 
     // Counters
-    int frameCounter = 0;
-    int TLBCounter = 0;
-    int numPageFaults = 0;
-    int numTranslated = 0;
-    int numTLBhits = 0;
+    int frameCounter    = 0;
+    int TLBCounter      = 0;
+    int clock           = 0;
+    int numPageFaults   = 0;
+    int numTranslated   = 0;
+    int numTLBhits      = 0;
 
     // Perform Translations
     char *line = 0;
@@ -111,17 +115,19 @@ int main(int argc, char **argv) {
         if (TLBframe != -1) {
             // TLB Hit
             currFrame = TLBframe;
+            setPageLastUsed(getPageFromPageTable(pageTable, getLogicalAddressPageNumber(logicalAddress)), clock);
             numTLBhits++;
         }
         else {
             Page *page = getPageFromPageTable(pageTable, getLogicalAddressPageNumber(logicalAddress));
             if (!isPageValid(page)) {
                 // Page Fault
-                handlePageFault(page, logicalAddress, physicalMemory, frameCounter, backStoreFile);
+                handlePageFault(pageTable, tlb, logicalAddress, physicalMemory, frameCounter, backStoreFile);
                 frameCounter++;
                 numPageFaults++;
             }
             // Get frame and update TLB
+            setPageLastUsed(page, clock);
             currFrame = getPageFrameNumber(page);
             TLBCounter = updateTLB(tlb, TLBCounter, logicalAddress, currFrame);
         }
@@ -129,6 +135,7 @@ int main(int argc, char **argv) {
         int value = getPhysicalMemoryValue(physicalMemory, currFrame, getLogicalAddressOffset(logicalAddress));
         printf("Virtual address: %d Physical address: %d Value: %d\n", virtualAddress, physicalAddress, value);
         numTranslated++;
+        clock++;
         free(logicalAddress);
     }
 
@@ -425,17 +432,55 @@ int translateLogicalToPhysicalAddress(uint8_t frame, LogicalAddress *logicalAddr
     return frame * FRAME_SIZE + getLogicalAddressOffset(logicalAddress);
 }
 
-void handlePageFault(Page *page, LogicalAddress *la, PhysicalMemory *mem, int frame, FILE *backingStore) {
-    assert(page != 0);
+void handlePageFault(PageTable *pageTable, TLB *tlb, LogicalAddress *la, PhysicalMemory *mem, int frame, FILE *backingStore) {
+    assert(pageTable != 0);
     assert(la != 0);
     assert(mem != 0);
     assert(frame >= 0);
     assert(backingStore != 0);
     long offset = getLogicalAddressPageNumber(la) * PAGE_SIZE;
+    int location = frame;
+    if (shouldReplace(frame)) {
+        int lru = getLRUindex(pageTable);
+        setPageValidation(getPageFromPageTable(pageTable, lru), 0);
+        location = getPageFrameNumber(getPageFromPageTable(pageTable, lru));
+        if (TLBlookup(tlb, lru) != -1) {
+            setTLBPageAtIndex(tlb, lru, -1);
+            setTLBFrameAtIndex(tlb, lru, -1);
+        }
+    }
     fseek(backingStore, offset, SEEK_SET);
-    fread(getPhysicalMemoryAtIndex(mem, frame), 1, FRAME_SIZE, backingStore);
-    setPageFrameNumber(page, frame);
-    setPageValidation(page, 1);
+    fread(getPhysicalMemoryAtIndex(mem, location), 1, FRAME_SIZE, backingStore);
+    setPageFrameNumber(getPageFromPageTable(pageTable, getLogicalAddressPageNumber(la)), location);
+    setPageValidation(getPageFromPageTable(pageTable, getLogicalAddressPageNumber(la)), 1);
+}
+
+int shouldReplace(int frame) {
+    return frame < 0 || frame > NUM_FRAMES - 1;
+}
+
+int getLRUindex(PageTable *pageTable) {
+    assert(pageTable != 0);
+    int index = getFirstValidIndex(pageTable);
+    int lastUsed = getPageLastUsed(getPageFromPageTable(pageTable, index));
+    for (int i = 1; i < NUM_PAGES; ++i) {
+        Page *page = getPageFromPageTable(pageTable, i);
+        if (isPageValid(page) && getPageLastUsed(page) < lastUsed) {
+            lastUsed = getPageLastUsed(page);
+            index = i;
+        }
+    }
+    return index;
+}
+
+int getFirstValidIndex(PageTable *pageTable) {
+    assert(pageTable != 0);
+    for (int i = 0; i < NUM_PAGES; ++i) {
+        if (isPageValid(getPageFromPageTable(pageTable, i))) {
+            return i;
+        }
+    }
+    return -1;
 }
 
 void printStatistics(FILE *fp, int numTranslated, int numPageFaults, int numTLBhits) {

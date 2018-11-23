@@ -8,7 +8,7 @@ fifo: 	fifo.c
 
 lru: 	lru.c
 	@echo Making lru...
-	@gcc $(LOPTS) fifo.c -o lru
+	@gcc $(LOPTS) lru.c -o lru
 
 test: 	all
 	@echo Testing fifo...
