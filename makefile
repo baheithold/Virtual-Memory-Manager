@@ -11,6 +11,7 @@ lru: 	lru.c
 	@gcc $(LOPTS) lru.c -o lru
 
 test: 	all
+	@echo Testing ***Should see no results from diff***
 	@echo Testing fifo...
 	@./fifo ./addresses.txt > fifo.out
 	@diff fifo.out correct-fifo.txt
