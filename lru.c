@@ -15,7 +15,7 @@
 #define PAGE_SIZE           256
 #define NUM_PAGES           256
 #define FRAME_SIZE          256
-#define NUM_FRAMES          256
+#define NUM_FRAMES          128
 #define TLB_SIZE            16
 
 /* Struct Type Prototypes */
@@ -39,6 +39,8 @@ int isPageValid(Page *);
 void setPageValidation(Page *, int);
 uint8_t getPageFrameNumber(Page *);
 void setPageFrameNumber(Page *, uint8_t);
+int getPageLastUsed(Page *);
+void setPageLastUsed(Page *, int);
 
 /* PageTable Function Prototypes */
 PageTable *newPageTable(void);
@@ -192,12 +194,14 @@ void printLogicalAddress(FILE *fp, LogicalAddress *addr) {
 typedef struct Page {
     int isValid;
     uint8_t frameNumber;
+    int lastUsed;
 } Page;
 
 Page *newPage(uint8_t frameNumber) {
     Page *page = malloc(sizeof(Page));
     page->isValid = 0;
     page->frameNumber = frameNumber;
+    page->lastUsed = 0;
     return page;
 }
 
@@ -219,6 +223,17 @@ uint8_t getPageFrameNumber(Page *page) {
 void setPageFrameNumber(Page *page, uint8_t frameNumber) {
     assert(page != 0);
     page->frameNumber = frameNumber;
+}
+
+int getPageLastUsed(Page *page) {
+    assert(page != 0);
+    return page->lastUsed;
+}
+
+void setPageLastUsed(Page *page, int lastUsed) {
+    assert(page != 0);
+    assert(lastUsed >= 0);
+    page->lastUsed = lastUsed;
 }
 
 
